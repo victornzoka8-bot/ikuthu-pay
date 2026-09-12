@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Ikuthu Pay - STK System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:sans-serif;padding:20px;max-width:400px;margin:auto;background:#f5f5f5}
+.card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 10px #0001;margin-bottom:15px}
+input,button{width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #ddd;box-sizing:border-box}
+button{background:#00a651;color:white;font-weight:bold;border:none;cursor:pointer}
+.success{color:green;font-weight:bold}.fail{color:red}
+</style>
+</head>
+<body>
+<h2>💰 Ikuthu Pay</h2>
+<div class="card">
+<h3>⚙️ Business Settings</h3>
+<input id="till" placeholder="Shortcode e.g 174379">
+<input id="key" placeholder="Consumer Key">
+<input id="secret" placeholder="Consumer Secret">
+<input id="passkey" placeholder="Passkey">
+<button onclick="saveSettings()">Save Settings</button>
+</div>
+<div class="card">
+<h3>📲 Send STK to Customer</h3>
+<input id="phone" placeholder="Customer Phone 2547...">
+<input id="amount" type="number" placeholder="Amount e.g 1680">
+<input id="ref" placeholder="Ref e.g IKUTHU-001">
+<button id="sendBtn" onclick="sendSTK()">SEND STK PUSH</button>
+<p id="status"></p>
+<div id="history"></div>
+</div>
+<script>
+function saveSettings(){
+ localStorage.setItem('till',document.getElementById('till').value);
+ localStorage.setItem('key',document.getElementById('key').value);
+ localStorage.setItem('secret',document.getElementById('secret').value);
+ localStorage.setItem('passkey',document.getElementById('passkey').value);
+ alert('Saved!');
+}
+function loadSettings(){
+ document.getElementById('till').value=localStorage.getItem('till')||'174379';
+ document.getElementById('key').value=localStorage.getItem('key')||'';
+ document.getElementById('secret').value=localStorage.getItem('secret')||'';
+ document.getElementById('passkey').value=localStorage.getItem('passkey')||'';
+}
+loadSettings();
+async function sendSTK(){
+ const btn=document.getElementById('sendBtn');btn.disabled=true;
+ const status=document.getElementById('status');status.innerHTML="Sending...";
+ try{
+  const res=await fetch('/api/send-stk',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({
+     phone:document.getElementById('phone').value,
+     amount:document.getElementById('amount').value,
+     accountRef:document.getElementById('ref').value,
+     businessShortCode:localStorage.getItem('till'),
+     consumerKey:localStorage.getItem('key'),
+     consumerSecret:localStorage.getItem('secret'),
+     passkey:localStorage.getItem('passkey')
+   })
+  });
+  const data=await res.json();
+  if(data.ResponseCode=='0'){
+    status.innerHTML=`<span class=success>✅ STK Sent! ${data.CustomerMessage}</span>`;
+  } else {
+    status.innerHTML=`<span class=fail>❌ ${JSON.stringify(data)}</span>`;
+  }
+ }catch(e){status.innerHTML=`<span class=fail>Error: ${e.message}</span>`;}
+ btn.disabled=false;
+}
+</script>
+</body>
+</html>
